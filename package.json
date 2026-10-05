@@ -627,7 +627,7 @@
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.1",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.16.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0"
