@@ -7,7 +7,9 @@ All notable changes to Stage Edit are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-10-05
+
+First released version. Everything below it was development on the way here, published nowhere.
 
 ### Added
 

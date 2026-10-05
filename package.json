@@ -2,7 +2,7 @@
   "name": "vscode-stage-edit",
   "displayName": "Stage Edit",
   "description": "Make staged changes editable from the Source Control diff view, the way working-tree changes already are.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "nmaitre",
   "license": "MIT",
   "repository": {
