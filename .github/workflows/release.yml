@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  VSCE_PAT: ${{ secrets.VSCE_PAT }}
+  OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # A tag that disagrees with the manifest produces a release nobody can reproduce.
+      - name: Check the tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$manifest" ]; then
+            echo "Tag $GITHUB_REF_NAME says $tag but package.json says $manifest." >&2
+            exit 1
+          fi
+
+      - name: Check types
+        run: npm run check-types
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: xvfb-run -a npm test
+
+      - name: Package
+        run: npm run vsix
+
+      - name: Publish the GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: stage-edit.vsix
+          generate_release_notes: true
+
+      # Both publish steps are skipped when the token is not configured, so the release still
+      # succeeds before a publisher account exists.
+      - name: Publish to the Visual Studio Marketplace
+        if: env.VSCE_PAT != '' && startsWith(github.ref, 'refs/tags/v')
+        run: npx --yes @vscode/vsce publish --no-dependencies --packagePath stage-edit.vsix
+
+      - name: Publish to Open VSX
+        if: env.OVSX_PAT != '' && startsWith(github.ref, 'refs/tags/v')
+        run: npx --yes ovsx publish stage-edit.vsix --pat "$OVSX_PAT"

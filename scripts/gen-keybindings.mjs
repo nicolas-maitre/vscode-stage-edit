@@ -13,7 +13,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const WHEN =
-	'stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never';
+	'stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && ' +
+	'config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never';
 
 const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const digits = '0123456789'.split('');

@@ -84,8 +84,28 @@ export async function resolveTarget(fsPath: string): Promise<StageEditTarget | u
 	return { repositoryRoot, relativePath: git.toRelativePath(repositoryRoot, fsPath) };
 }
 
+/**
+ * Whether paths on this host distinguish case.
+ *
+ * macOS and Windows normally do not, and VS Code is free to hand a provider a URI whose case
+ * differs from the one we minted — so every path comparison and map key in this extension has
+ * to go through here rather than comparing strings directly.
+ */
+export function isCaseSensitiveFileSystem(): boolean {
+	return process.platform === 'linux';
+}
+
+/** A path reduced to a form safe to compare or use as a map key on this host. */
+export function pathKey(value: string): string {
+	return isCaseSensitiveFileSystem() ? value : value.toLowerCase();
+}
+
+export function pathsEqual(left: string, right: string): boolean {
+	return pathKey(left) === pathKey(right);
+}
+
 export function targetKey(target: StageEditTarget): string {
-	return `${target.repositoryRoot}::${target.relativePath}`;
+	return pathKey(`${target.repositoryRoot}::${target.relativePath}`);
 }
 
 /**

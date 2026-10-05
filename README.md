@@ -3,8 +3,17 @@
 
 # Stage Edit
 
+[![CI](https://github.com/nicolas-maitre/vscode-stage-edit/actions/workflows/ci.yml/badge.svg)](https://github.com/nicolas-maitre/vscode-stage-edit/actions/workflows/ci.yml)
+
 Makes **staged changes** editable from the Source Control diff view, the way **changes** already
 are.
+
+> [!WARNING]
+> **Only tested on macOS.** Everything here has been developed and run on macOS with VS Code
+> 1.140 and git 2.48. Nothing has been exercised on Windows or Linux, or in a remote workspace
+> (SSH, WSL, containers, Codespaces). CI runs the suite on all three platforms, but the Windows
+> job is not yet gating — path case handling and locating the git executable are the parts most
+> likely to need work there. Reports welcome.
 
 In VS Code, clicking a file under *Changes* gives you a diff whose right-hand side is the real
 file on disk, so you can type straight into it. Clicking a file under *Staged Changes* gives you
@@ -35,6 +44,12 @@ The prompt offers four outcomes: this file for the rest of the session, this fil
 this project, or everywhere. Picking a scope writes the matching setting, so the next staged
 diff you open skips the prompt and opens editable directly.
 
+> [!IMPORTANT]
+> **If you use a Vim extension, set `stageEdit.promptOnKeypress` to `false`.** Keybindings are
+> resolved before the `type` command, so while a read-only staged diff is focused those bindings
+> swallow the keystroke: pressing `j` would raise this prompt instead of moving the cursor. With
+> the setting off, nothing is bound and the editor title button and commands still work.
+
 ## Settings
 
 | Setting | Default | What it does |
@@ -44,6 +59,7 @@ diff you open skips the prompt and opens editable directly.
 | `stageEdit.apply.mode` | `onSave` | `onSave` writes the index when you save. `live` writes it a moment after you stop typing. |
 | `stageEdit.apply.liveDebounce` | `500` | Idle milliseconds before a live apply fires. |
 | `stageEdit.apply.syncWorkingTree` | `askWhenDirty` | `askWhenDirty`, `whenSafe`, `never`, or `always`. See below. |
+| `stageEdit.promptOnKeypress` | `true` | Offer to enable editing when you start typing in a read-only staged diff. **Turn this off if you use a Vim extension** — see below. |
 | `stageEdit.showEditorTitleButton` | `true` | Show the pencil in the editor title bar. |
 
 `live` mode is implemented as a debounced `document.save()`, so both modes go through exactly
@@ -131,7 +147,7 @@ read-only diff anyway, typing in it opens the editable view instead of asking ag
 ```bash
 npm install
 npm run watch       # esbuild, then F5 to launch the Extension Development Host
-npm test            # 54 tests against real temporary repositories
+npm test            # 63 tests against real temporary repositories
 npm run reinstall   # build, package, and install into your own VS Code
 ```
 
@@ -145,4 +161,26 @@ with `npm run watch` running you just reload that window. Nothing is installed, 
 disturb the copy in your real VS Code.
 
 `scripts/gen-keybindings.mjs` regenerates the edit-intent keybindings in `package.json`; run
-`npm run gen:keybindings` after changing the key list or the context key.
+`npm run gen:keybindings` after changing the key list or the context key. CI checks that the
+committed file matches what the generator produces.
+
+### CI and releases
+
+`.github/workflows/ci.yml` runs type checking, lint, the keybinding-generator check and the full
+test suite on Linux, macOS and Windows for every push and pull request, and uploads the built
+`.vsix` as an artifact. The Windows job is marked `continue-on-error` until the platform is
+actually verified; make it gating once it is green.
+
+`.github/workflows/release.yml` runs on a `v*` tag. It refuses to proceed if the tag disagrees
+with the version in `package.json`, runs the suite, attaches the `.vsix` to a GitHub release, and
+publishes to the Visual Studio Marketplace and Open VSX — each of those two steps only when the
+corresponding token (`VSCE_PAT`, `OVSX_PAT`) is present in the repository secrets, so tagging
+works before a publisher account exists.
+
+```bash
+npm version minor        # updates package.json
+git commit -am "Release vX.Y.Z" && git tag vX.Y.Z && git push --follow-tags
+```
+
+The icon is `images/icon.svg`, rasterised to `images/icon.png` with
+`rsvg-convert -w 128 -h 128 images/icon.svg -o images/icon.png`.

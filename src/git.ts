@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 export class GitError extends Error {
@@ -19,13 +20,51 @@ export interface GitOutput {
 }
 
 /**
+ * The git binary to run. Starts as a bare `git` from PATH and is replaced at activation with
+ * whatever the user's `git.path` says, which is how people whose git is not on PATH — common
+ * on Windows — tell the built-in Git extension where to find it. Kept as module state rather
+ * than read from `vscode` here so this file stays free of the editor API.
+ */
+let executable = 'git';
+
+export function setGitExecutable(resolved: string): void {
+	executable = resolved;
+}
+
+export function getGitExecutable(): string {
+	return executable;
+}
+
+/**
+ * Picks the first usable path out of a `git.path` setting, which VS Code allows to be a single
+ * path or a list of candidates. Falls back to PATH when none of them exist.
+ */
+export async function resolveGitExecutable(
+	configured: string | string[] | undefined,
+): Promise<string> {
+	const candidates = (Array.isArray(configured) ? configured : configured ? [configured] : [])
+		.map((candidate) => candidate.trim())
+		.filter((candidate) => candidate.length > 0);
+
+	for (const candidate of candidates) {
+		try {
+			await fs.access(candidate, fs.constants.F_OK);
+			return candidate;
+		} catch {
+			// Try the next candidate, exactly as the Git extension does.
+		}
+	}
+	return 'git';
+}
+
+/**
  * Runs git with the given arguments. Output is kept as a Buffer because blob contents are
  * read and written verbatim — anything that round-trips through a JS string would corrupt
  * files that are not valid UTF-8.
  */
 export function run(args: readonly string[], cwd: string, stdin?: Buffer): Promise<GitOutput> {
 	return new Promise((resolve, reject) => {
-		const child = spawn('git', args as string[], {
+		const child = spawn(executable, args as string[], {
 			cwd,
 			env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
 		});
@@ -39,7 +78,18 @@ export function run(args: readonly string[], cwd: string, stdin?: Buffer): Promi
 			stderr += chunk;
 		});
 
-		child.on('error', reject);
+		child.on('error', (error: NodeJS.ErrnoException) => {
+			if (error.code === 'ENOENT') {
+				reject(
+					new Error(
+						`Could not run git: "${executable}" was not found. ` +
+							`Set "git.path" to the full path of your git executable.`,
+					),
+				);
+				return;
+			}
+			reject(error);
+		});
 		child.on('close', (code) => {
 			resolve({ stdout: Buffer.concat(stdoutChunks), stderr, exitCode: code ?? -1 });
 		});

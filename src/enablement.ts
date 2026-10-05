@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { minimatch } from 'minimatch';
-import { StageEditTarget, targetKey } from './uris';
+import { StageEditTarget, isCaseSensitiveFileSystem, targetKey } from './uris';
 
 export type EditingDefault = 'prompt' | 'always' | 'never';
 export type ApplyMode = 'onSave' | 'live';
@@ -106,7 +106,12 @@ export class Enablement {
 
 	private matchesAlwaysForPaths(target: StageEditTarget): boolean {
 		const patterns = configurationFor(target).get<string[]>('editing.alwaysForPaths', []);
-		return patterns.some((pattern) => minimatch(target.relativePath, pattern, { dot: true }));
+		return patterns.some((pattern) =>
+			minimatch(target.relativePath, pattern, {
+				dot: true,
+				nocase: !isCaseSensitiveFileSystem(),
+			}),
+		);
 	}
 
 	enableForSession(target: StageEditTarget): void {

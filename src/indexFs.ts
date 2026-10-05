@@ -3,7 +3,7 @@ import * as nodePath from 'node:path';
 import * as git from './git';
 import { ApplySettings, applySettings } from './enablement';
 import { refreshRepository } from './gitExtension';
-import { SCHEME, StageEditTarget, parseStageEditUri } from './uris';
+import { SCHEME, StageEditTarget, pathKey, parseStageEditUri, pathsEqual } from './uris';
 
 /** Modes we are willing to write over in the working tree. Symlinks and gitlinks are not. */
 const REGULAR_FILE_MODES = new Set(['100644', '100755']);
@@ -163,7 +163,7 @@ export class IndexFileSystemProvider implements vscode.FileSystemProvider, vscod
 		}
 
 		const size = await git.getBlobSize(target.repositoryRoot, entry.objectId);
-		const key = uri.toString();
+		const key = documentKey(uri);
 		const previous = this.served.get(key);
 
 		// Keep the stamp stable while the index entry is unchanged: VS Code compares it against
@@ -185,7 +185,7 @@ export class IndexFileSystemProvider implements vscode.FileSystemProvider, vscod
 			throw vscode.FileSystemError.FileNotFound(uri);
 		}
 		const content = await git.readBlob(target.repositoryRoot, entry.objectId);
-		const key = uri.toString();
+		const key = documentKey(uri);
 		this.served.set(key, {
 			objectId: entry.objectId,
 			mtime: this.served.get(key)?.mtime ?? Date.now(),
@@ -209,7 +209,7 @@ export class IndexFileSystemProvider implements vscode.FileSystemProvider, vscod
 		}
 
 		const settings = applySettings(target);
-		const automatic = this.automaticApplies.delete(uri.toString());
+		const automatic = this.automaticApplies.delete(documentKey(uri));
 
 		// Decided in full *before* the index is touched. Under `askWhenDirty` the user can
 		// still call the whole thing off, and a cancelled save must leave the index exactly as
@@ -231,7 +231,7 @@ export class IndexFileSystemProvider implements vscode.FileSystemProvider, vscod
 			await git.checkoutIndexToWorkingTree(target.repositoryRoot, target.relativePath);
 		}
 
-		this.served.set(uri.toString(), {
+		this.served.set(documentKey(uri), {
 			objectId,
 			mtime: Date.now(),
 			size: buffer.byteLength,
@@ -248,7 +248,7 @@ export class IndexFileSystemProvider implements vscode.FileSystemProvider, vscod
 	 * quietly held back until the user saves on purpose and can answer for themselves.
 	 */
 	markAutomaticApply(uri: vscode.Uri): void {
-		this.automaticApplies.add(uri.toString());
+		this.automaticApplies.add(documentKey(uri));
 	}
 
 	private async planWorkingTree(
@@ -285,7 +285,7 @@ export class IndexFileSystemProvider implements vscode.FileSystemProvider, vscod
 			return { refusal: 'automatic' };
 		}
 
-		const key = uri.toString();
+		const key = documentKey(uri);
 		if (this.confirming.has(key)) {
 			return { refusal: 'already-asking' };
 		}
@@ -320,7 +320,7 @@ export class IndexFileSystemProvider implements vscode.FileSystemProvider, vscod
 			if (!target) {
 				continue;
 			}
-			const key = document.uri.toString();
+			const key = documentKey(document.uri);
 			const previous = this.served.get(key);
 			const entry = await git.getIndexEntry(target.repositoryRoot, target.relativePath);
 
@@ -376,12 +376,17 @@ function filePathOf(target: StageEditTarget): string {
 	return vscode.Uri.file(`${target.repositoryRoot}/${target.relativePath}`).path;
 }
 
+/** Map key for a document, folded so a difference in case cannot split one file into two. */
+function documentKey(uri: vscode.Uri): string {
+	return pathKey(uri.toString());
+}
+
 function isFileUri(uri: vscode.Uri, target: StageEditTarget): boolean {
-	return uri.path === filePathOf(target);
+	return pathsEqual(uri.path, filePathOf(target));
 }
 
 /** True when `uri` names a directory on the way down to the file. */
 function isAncestorUri(uri: vscode.Uri, target: StageEditTarget): boolean {
 	const prefix = uri.path.endsWith('/') ? uri.path : `${uri.path}/`;
-	return filePathOf(target).startsWith(prefix);
+	return pathKey(filePathOf(target)).startsWith(pathKey(prefix));
 }

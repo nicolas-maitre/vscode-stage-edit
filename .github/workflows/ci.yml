@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # Windows is not yet verified: nothing in this extension has been run there, and the
+    # path-case and git-executable handling are the parts most likely to be wrong. It runs so
+    # the failures are visible, but it does not gate the build. Drop this once it is green.
+    continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Cache the VS Code test instance
+        uses: actions/cache@v4
+        with:
+          path: .vscode-test
+          key: vscode-test-${{ runner.os }}
+
+      - name: Check types
+        run: npm run check-types
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check generated keybindings are current
+        run: |
+          npm run gen:keybindings
+          git diff --exit-code package.json
+
+      # The integration tests drive a real VS Code instance, which needs a display.
+      - name: Test (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm test
+
+      - name: Test
+        if: runner.os != 'Linux'
+        run: npm test
+
+      - name: Package
+        run: npm run vsix
+
+      - name: Upload the built extension
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-edit-vsix
+          path: stage-edit.vsix

@@ -12,7 +12,14 @@ import {
 	openEditable,
 	openEditableForTab,
 } from './stagedDiff';
-import { SCHEME, StageEditTarget, parseStageEditUri, resolveTarget, toHeadUri } from './uris';
+import {
+	SCHEME,
+	StageEditTarget,
+	isCaseSensitiveFileSystem,
+	parseStageEditUri,
+	resolveTarget,
+	toHeadUri,
+} from './uris';
 
 /** Set while a read-only staged diff is focused; gates the edit button and the typing prompt. */
 const CONTEXT_STAGED_DIFF_ACTIVE = 'stageEdit.stagedDiffActive';
@@ -29,13 +36,16 @@ export function activate(context: vscode.ExtensionContext): void {
 		enablement,
 		provider,
 		vscode.workspace.registerFileSystemProvider(SCHEME, provider, {
-			isCaseSensitive: true,
+			// Mirrors the host filesystem: on macOS and Windows the editor should treat two
+			// spellings of the same path as one file, exactly as the real one does.
+			isCaseSensitive: isCaseSensitiveFileSystem(),
 			isReadonly: false,
 		}),
 	);
 
 	void setContext(CONTEXT_PROMPT_ACTIVE, false);
 
+	registerGitExecutable(context);
 	registerTabTracking(context, enablement);
 	registerLiveApply(context, provider);
 	registerCommands(context, enablement);
@@ -58,6 +68,29 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
 	// Everything is disposed through context.subscriptions.
+}
+
+// --- Locating git ------------------------------------------------------------------------
+
+/**
+ * Follows the built-in Git extension's `git.path`, so a user whose git is not on PATH does not
+ * get a bare ENOENT out of us while the rest of their Git integration works fine.
+ */
+function registerGitExecutable(context: vscode.ExtensionContext): void {
+	const apply = async () => {
+		const configured = vscode.workspace.getConfiguration('git').get<string | string[]>('path');
+		git.setGitExecutable(await git.resolveGitExecutable(configured));
+	};
+
+	context.subscriptions.push(
+		vscode.workspace.onDidChangeConfiguration((event) => {
+			if (event.affectsConfiguration('git.path')) {
+				void apply();
+			}
+		}),
+	);
+
+	void apply();
 }
 
 // --- Tracking which kind of staged view is in front -------------------------------------

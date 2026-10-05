@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Two columns of a diff: HEAD on the left, the staged copy on the right, with the
+       right-hand side carrying the pencil that this extension is about. -->
+  <rect width="128" height="128" rx="26" fill="#1f2430"/>
+
+  <!-- left side: the committed version, dimmed -->
+  <g fill="#5a6782">
+    <rect x="18" y="26" width="34" height="7" rx="3.5"/>
+    <rect x="18" y="41" width="26" height="7" rx="3.5"/>
+    <rect x="18" y="56" width="34" height="7" rx="3.5"/>
+    <rect x="18" y="71" width="22" height="7" rx="3.5"/>
+    <rect x="18" y="86" width="30" height="7" rx="3.5"/>
+  </g>
+
+  <!-- divider -->
+  <rect x="62.5" y="22" width="3" height="84" rx="1.5" fill="#3a4357"/>
+
+  <!-- right side: the staged version, lit, with one changed line picked out -->
+  <g fill="#8fa4c8">
+    <rect x="76" y="26" width="34" height="7" rx="3.5"/>
+    <rect x="76" y="56" width="30" height="7" rx="3.5"/>
+    <rect x="76" y="71" width="22" height="7" rx="3.5"/>
+  </g>
+  <rect x="76" y="41" width="28" height="7" rx="3.5" fill="#7fd1a0"/>
+
+  <!-- pencil, nib pointing at the changed line -->
+  <g transform="translate(84.5 70.5) rotate(-45)">
+    <rect x="0" y="0" width="13" height="38" rx="3" fill="#f2c14e"/>
+    <rect x="0" y="0" width="13" height="7" rx="3" fill="#d8a63a"/>
+    <path d="M0 38 L13 38 L6.5 50 Z" fill="#f7e3b0"/>
+    <path d="M3.4 44.3 L9.6 44.3 L6.5 50 Z" fill="#2b3040"/>
+  </g>
+</svg>

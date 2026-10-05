@@ -5,6 +5,20 @@
   "version": "0.4.0",
   "publisher": "nmaitre",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicolas-maitre/vscode-stage-edit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nicolas-maitre/vscode-stage-edit/issues"
+  },
+  "homepage": "https://github.com/nicolas-maitre/vscode-stage-edit#readme",
+  "qna": "https://github.com/nicolas-maitre/vscode-stage-edit/issues",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1f2430",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -24,9 +38,22 @@
     "onStartupFinished",
     "onFileSystem:stage-edit"
   ],
+  "extensionKind": [
+    "workspace"
+  ],
   "extensionDependencies": [
     "vscode.git"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Writing the working tree runs git checkout-index, which applies the clean/smudge filters a repository defines in .gitattributes and its own config. Those are arbitrary commands, so this extension does not run in a workspace you have not trusted."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Reading and writing the index requires running the git executable against a real repository on disk."
+    }
+  },
   "contributes": {
     "configuration": {
       "title": "Stage Edit",
@@ -100,6 +127,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show an edit button in the editor title bar while a read-only staged diff is open."
+        },
+        "stageEdit.promptOnKeypress": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Offer to make the staged copy editable when you start typing in a read-only staged diff.\n\nVS Code raises no event for an edit attempt on a read-only editor, so this works by binding the keys that begin an edit while such a diff is focused. Keybindings are resolved before typing is dispatched, which means that **while a read-only staged diff is focused, a modal-editing extension will not see those keystrokes** — with Vim, pressing `j` there would raise this prompt instead of moving the cursor. Turn this off if you use one; the editor title button and the commands are unaffected."
         }
       }
     },
@@ -169,404 +201,404 @@
       {
         "key": "a",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "b",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "c",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "d",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "e",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "f",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "g",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "h",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "i",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "j",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "k",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "l",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "m",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "n",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "o",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "p",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "q",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "r",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "s",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "t",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "u",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "v",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "w",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "x",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "y",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "z",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+a",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+b",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+c",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+d",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+e",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+f",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+g",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+h",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+i",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+j",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+k",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+l",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+m",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+n",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+o",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+p",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+q",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+r",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+s",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+t",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+u",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+v",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+w",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+x",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+y",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "shift+z",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "0",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "1",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "2",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "3",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "4",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "5",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "6",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "7",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "8",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "9",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "-",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "=",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "[",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "]",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "\\",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": ";",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "'",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": ",",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": ".",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "/",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "`",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "space",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "enter",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "backspace",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "delete",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "tab",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "ctrl+v",
         "mac": "cmd+v",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       },
       {
         "key": "ctrl+x",
         "mac": "cmd+x",
         "command": "stageEdit.promptEnable",
-        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.promptOnKeypress && config.stageEdit.editing.default != never"
       }
     ]
   },
@@ -585,6 +617,9 @@
     "vsix": "vsce package --no-dependencies --allow-missing-repository -o stage-edit.vsix",
     "reinstall": "npm run package && npm run vsix && code --install-extension stage-edit.vsix --force"
   },
+  "dependencies": {
+    "minimatch": "^10.0.1"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.10.0",
@@ -596,8 +631,5 @@
     "eslint": "^9.16.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0"
-  },
-  "dependencies": {
-    "minimatch": "^10.0.1"
   }
 }
