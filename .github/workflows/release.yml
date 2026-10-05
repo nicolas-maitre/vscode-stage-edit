@@ -9,6 +9,7 @@ permissions:
   contents: write
 
 env:
+  # VSCE_PAT is read here so the Marketplace step works the moment it is uncommented.
   VSCE_PAT: ${{ secrets.VSCE_PAT }}
   OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
@@ -57,12 +58,20 @@ jobs:
           files: stage-edit.vsix
           generate_release_notes: true
 
-      # Both publish steps are skipped when the token is not configured, so the release still
-      # succeeds before a publisher account exists.
-      - name: Publish to the Visual Studio Marketplace
-        if: env.VSCE_PAT != '' && startsWith(github.ref, 'refs/tags/v')
-        run: npx --yes @vscode/vsce publish --no-dependencies --packagePath stage-edit.vsix
+      # DISABLED until the Azure DevOps publisher account exists. To turn it back on:
+      #   1. Register the publisher and make sure `publisher` in package.json matches its name
+      #      exactly, or vsce will reject the upload.
+      #   2. Add the personal access token as the VSCE_PAT repository secret.
+      #   3. Uncomment the step below.
+      # Leaving it commented rather than relying on the token check means a tag cannot publish
+      # by accident while the name in package.json is still a guess.
+      #
+      # - name: Publish to the Visual Studio Marketplace
+      #   if: env.VSCE_PAT != '' && startsWith(github.ref, 'refs/tags/v')
+      #   run: npx --yes @vscode/vsce publish --no-dependencies --packagePath stage-edit.vsix
 
+      # Open VSX is a separate registry and needs no Azure DevOps account. It skips itself
+      # while OVSX_PAT is unset, so it is harmless to leave in place.
       - name: Publish to Open VSX
         if: env.OVSX_PAT != '' && startsWith(github.ref, 'refs/tags/v')
         run: npx --yes ovsx publish stage-edit.vsix --pat "$OVSX_PAT"

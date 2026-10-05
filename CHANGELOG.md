@@ -21,7 +21,9 @@ All notable changes to Stage Edit are recorded here. The format follows
   runs `git checkout-index`, which applies the clean/smudge filters a repository defines, and
   those are arbitrary commands.
 - GitHub Actions for CI across Linux, macOS and Windows, and a tagged release that attaches the
-  `.vsix` and publishes to the Marketplace and Open VSX when the tokens are configured.
+  `.vsix` to a GitHub release. Publishing to the Visual Studio Marketplace is commented out
+  until a publisher account exists; publishing to Open VSX skips itself while its token is
+  unset.
 
 ### Fixed
 

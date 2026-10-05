@@ -172,10 +172,12 @@ test suite on Linux, macOS and Windows for every push and pull request, and uplo
 actually verified; make it gating once it is green.
 
 `.github/workflows/release.yml` runs on a `v*` tag. It refuses to proceed if the tag disagrees
-with the version in `package.json`, runs the suite, attaches the `.vsix` to a GitHub release, and
-publishes to the Visual Studio Marketplace and Open VSX — each of those two steps only when the
-corresponding token (`VSCE_PAT`, `OVSX_PAT`) is present in the repository secrets, so tagging
-works before a publisher account exists.
+with the version in `package.json`, runs the suite, and attaches the `.vsix` to a GitHub release.
+
+Publishing to the **Visual Studio Marketplace is commented out** until an Azure DevOps publisher
+account exists; the step itself explains the three things needed to switch it on. Publishing to
+**Open VSX** is in place but skips itself while the `OVSX_PAT` secret is unset. So tagging a
+release today produces a GitHub release and nothing else.
 
 ```bash
 npm version minor        # updates package.json
