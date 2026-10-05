@@ -1,0 +1,603 @@
+{
+  "name": "vscode-stage-edit",
+  "displayName": "Stage Edit",
+  "description": "Make staged changes editable from the Source Control diff view, the way working-tree changes already are.",
+  "version": "0.4.0",
+  "publisher": "nmaitre",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "index",
+    "staged",
+    "diff",
+    "source control"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onFileSystem:stage-edit"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Stage Edit",
+      "properties": {
+        "stageEdit.editing.default": {
+          "type": "string",
+          "enum": [
+            "prompt",
+            "always",
+            "never"
+          ],
+          "enumDescriptions": [
+            "Leave the stock read-only diff in place, and offer to make it editable the first time you try to type in it.",
+            "Always open staged changes in an editable diff.",
+            "Never offer editing. The edit button and keyboard prompt are disabled; the commands still work if invoked explicitly."
+          ],
+          "default": "prompt",
+          "scope": "resource",
+          "markdownDescription": "Whether staged changes open as an editable diff. Set this in User settings for a global default, or in the workspace `.vscode/settings.json` to enable it for one project only."
+        },
+        "stageEdit.editing.alwaysForPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "resource",
+          "markdownDescription": "Glob patterns, relative to the repository root, that always open as an editable staged diff regardless of `#stageEdit.editing.default#`. Use the *Stage Edit: Always Edit Staged Changes for This File* command to add the current file."
+        },
+        "stageEdit.apply.mode": {
+          "type": "string",
+          "enum": [
+            "onSave",
+            "live"
+          ],
+          "enumDescriptions": [
+            "Write the Git index when you save the editor.",
+            "Write the Git index automatically a moment after you stop typing."
+          ],
+          "default": "onSave",
+          "scope": "resource",
+          "description": "When edits to the staged side are written back to the Git index."
+        },
+        "stageEdit.apply.liveDebounce": {
+          "type": "number",
+          "default": 500,
+          "minimum": 100,
+          "maximum": 10000,
+          "scope": "resource",
+          "markdownDescription": "Idle time in milliseconds before a live apply writes the index. Only used when `#stageEdit.apply.mode#` is `live`."
+        },
+        "stageEdit.apply.syncWorkingTree": {
+          "type": "string",
+          "enum": [
+            "askWhenDirty",
+            "whenSafe",
+            "never",
+            "always"
+          ],
+          "enumDescriptions": [
+            "Keep the file on disk in step with the staged copy. If it has unstaged changes that following along would overwrite, refuse the save and offer to overwrite them.",
+            "Write the file on disk when it has no unstaged changes to lose, and silently leave it alone when it does. The save always succeeds.",
+            "Never touch the file on disk. Editing the staged copy is entirely independent of the working tree, and the save always succeeds.",
+            "Always write the file on disk, overwriting any unstaged changes in it without asking."
+          ],
+          "default": "askWhenDirty",
+          "scope": "resource",
+          "markdownDescription": "How far the file on disk follows an edit to the staged copy, and what happens when it cannot follow without losing something.\n\n`askWhenDirty` (the default) is the only mode that can refuse a save: the staged copy and the file on disk are kept in step, and when the file has unstaged changes it stops and asks rather than letting the two drift apart or quietly overwriting your work. Overwriting once leaves the file in step, so it will not ask again.\n\nThe file is written with `git checkout-index`, so smudge filters, line endings and the executable bit stay correct. Symlinks and submodule entries are never written over."
+        },
+        "stageEdit.showEditorTitleButton": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show an edit button in the editor title bar while a read-only staged diff is open."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "stageEdit.openEditable",
+        "title": "Open Editable Staged Changes",
+        "category": "Stage Edit",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "stageEdit.promptEnable",
+        "title": "Enable Editing of Staged Changes",
+        "category": "Stage Edit"
+      },
+      {
+        "command": "stageEdit.alwaysForThisFile",
+        "title": "Always Edit Staged Changes for This File",
+        "category": "Stage Edit"
+      },
+      {
+        "command": "stageEdit.applyNow",
+        "title": "Write Staged Edits to the Index",
+        "category": "Stage Edit"
+      },
+      {
+        "command": "stageEdit.revertToIndex",
+        "title": "Discard Staged Edits",
+        "category": "Stage Edit"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "stageEdit.promptEnable",
+          "when": "false"
+        },
+        {
+          "command": "stageEdit.alwaysForThisFile",
+          "when": "stageEdit.stagedDiffActive || stageEdit.editableDiffActive"
+        },
+        {
+          "command": "stageEdit.applyNow",
+          "when": "stageEdit.editableDiffActive"
+        },
+        {
+          "command": "stageEdit.revertToIndex",
+          "when": "stageEdit.editableDiffActive"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "stageEdit.openEditable",
+          "when": "stageEdit.stagedDiffActive && config.stageEdit.showEditorTitleButton && config.stageEdit.editing.default != never",
+          "group": "navigation@-1"
+        }
+      ],
+      "scm/resourceState/context": [
+        {
+          "command": "stageEdit.openEditable",
+          "when": "scmProvider == git && scmResourceGroup == index",
+          "group": "1_modification@99"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "key": "a",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "b",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "c",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "d",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "e",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "f",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "g",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "h",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "i",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "j",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "k",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "l",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "m",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "n",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "o",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "p",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "q",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "r",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "s",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "t",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "u",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "v",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "w",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "x",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "y",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "z",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+a",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+b",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+c",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+d",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+e",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+f",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+g",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+h",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+i",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+j",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+k",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+l",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+m",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+n",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+o",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+p",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+q",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+r",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+s",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+t",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+u",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+v",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+w",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+x",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+y",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "shift+z",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "0",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "1",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "2",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "3",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "4",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "5",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "6",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "7",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "8",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "9",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "-",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "=",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "[",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "]",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "\\",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": ";",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "'",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": ",",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": ".",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "/",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "`",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "space",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "enter",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "backspace",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "delete",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "tab",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "ctrl+v",
+        "mac": "cmd+v",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      },
+      {
+        "key": "ctrl+x",
+        "mac": "cmd+x",
+        "command": "stageEdit.promptEnable",
+        "when": "stageEdit.stagedDiffActive && editorTextFocus && !stageEdit.promptActive && config.stageEdit.editing.default != never"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile",
+    "check-types": "tsc --noEmit -p .",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "gen:keybindings": "node scripts/gen-keybindings.mjs",
+    "vsix": "vsce package --no-dependencies --allow-missing-repository -o stage-edit.vsix",
+    "reinstall": "npm run package && npm run vsix && code --install-extension stage-edit.vsix --force"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.0",
+    "@types/vscode": "~1.90.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.16.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0"
+  },
+  "dependencies": {
+    "minimatch": "^10.0.1"
+  }
+}
