@@ -4,11 +4,33 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # @types/vscode is pinned to the oldest VS Code this extension supports, and that pin is
+      # load-bearing: it is the only thing proving the code uses no API newer than the
+      # engines.vscode floor the manifest advertises. It moves when that floor moves, by hand,
+      # never on its own. (vsce also rejects a types version above engines.)
+      - dependency-name: '@types/vscode'
     groups:
+      # Minor and patch updates travel together; majors are deliberately left out so each one
+      # arrives as its own PR. Grouping everything meant a single breaking bump — typescript 7
+      # against typescript-eslint's `<6.1.0` peer range — took five perfectly good updates down
+      # with it and left a branch that would not even `npm ci`.
       dev-dependencies:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # Same split: routine bumps in one PR, majors on their own, since a major action bump can
+      # change inputs or runtime and deserves to be read.
+      actions:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
