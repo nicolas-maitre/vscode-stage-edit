@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload the built extension
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stage-edit-vsix
           path: stage-edit.vsix
