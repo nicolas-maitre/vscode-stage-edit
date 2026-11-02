@@ -618,7 +618,7 @@
     "reinstall": "npm run package && npm run vsix && code --install-extension stage-edit.vsix --force"
   },
   "dependencies": {
-    "minimatch": "^10.0.1"
+    "minimatch": "^11.0.3"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
